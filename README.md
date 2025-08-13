@@ -183,23 +183,6 @@ curl -X DELETE http://192.168.1.1:8080/dns \
 - Implement IP allowlists or additional authentication layers for production use
 - Regular API key rotation recommended
 
-## Development Roadmap
-
-- HTTPS support integration (native or via reverse proxy)
-- Syslog integration for OpenWrt logging
-- Batch operations support in CLI client
-- Record validation and conflict resolution
-- Configuration backup and restore functionality
-
-## Contributing
-
-1. Fork the repository
-2. Create feature branch (`git checkout -b feature/new-feature`)
-3. Commit changes (`git commit -am 'Add new feature'`)
-4. Push to branch (`git push origin feature/new-feature`)
-5. Create Pull Request
-
-## License
 
 This project is licensed under the MIT License. See LICENSE file for details.
 
