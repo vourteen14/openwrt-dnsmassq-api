@@ -44,12 +44,7 @@ var (
 	flagVersion = flag.Bool("version", false, "show version information")
 	flagVerbose = flag.Bool("v", false, "enable verbose output")
 	flagHelp    = flag.Bool("h", false, "show help")
-	
-	cmdList   = flag.Bool("list", false, "list all DNS records")
-	cmdAdd    = flag.Bool("add", false, "add new DNS record")
-	cmdUpdate = flag.Bool("update", false, "update existing DNS record")
-	cmdDelete = flag.Bool("delete", false, "delete DNS record")
-	
+
 	optDomain = flag.String("domain", "", "target domain name")
 	optIP     = flag.String("ip", "", "IP address")
 	optNewIP  = flag.String("new-ip", "", "new IP address for update operation")
@@ -266,71 +261,59 @@ OPTIONS:
     --setup         configure server endpoint and credentials
 
 COMMANDS:
-    --list                                  list all DNS records
-    --add --domain <name> --ip <addr>       add new DNS record
-    --update --domain <name> [--ip <old>] --new-ip <addr>
+    list                                    list all DNS records
+    add --domain <name> --ip <addr>         add new DNS record
+    update --domain <name> [--ip <old>] --new-ip <addr>
                                             update existing DNS record
-    --delete --domain <name> [--ip <addr>]  delete DNS record
+    delete --domain <name> [--ip <addr>]    delete DNS record
 
 EXAMPLES:
     dnscli --setup
-    dnscli --list
-    dnscli --add --domain api.example.com --ip 192.168.1.100
-    dnscli --update --domain api.example.com --new-ip 192.168.1.101
-    dnscli --delete --domain api.example.com
+    dnscli list
+    dnscli add --domain api.example.com --ip 192.168.1.100
+    dnscli update --domain api.example.com --new-ip 192.168.1.101
+    dnscli delete --domain api.example.com
 
 For more information, see the documentation.
 `, version)
 }
 
-func validateArgs() error {
-	commands := 0
-	if *cmdList { commands++ }
-	if *cmdAdd { commands++ }
-	if *cmdUpdate { commands++ }
-	if *cmdDelete { commands++ }
-	
-	if commands == 0 {
-		return fmt.Errorf("no command specified")
-	}
-	if commands > 1 {
-		return fmt.Errorf("multiple commands specified")
-	}
-	
-	if *cmdAdd {
+func validateArgs(command string) error {
+	switch command {
+	case "list":
+		return nil
+	case "add":
 		if *optDomain == "" || *optIP == "" {
 			return fmt.Errorf("add command requires --domain and --ip")
 		}
-	}
-	
-	if *cmdUpdate {
+	case "update":
 		if *optDomain == "" || *optNewIP == "" {
 			return fmt.Errorf("update command requires --domain and --new-ip")
 		}
-	}
-	
-	if *cmdDelete {
+	case "delete":
 		if *optDomain == "" {
 			return fmt.Errorf("delete command requires --domain")
 		}
+	default:
+		return fmt.Errorf("unknown command: %s", command)
 	}
-	
+
 	return nil
 }
 
 func main() {
 	flag.Parse()
-	
+
 	if *flagHelp {
 		showUsage()
 		return
 	}
-	
+
 	if *flagVersion {
 		fmt.Printf("dnscli version %s\n", version)
 		return
 	}
-	
+
 	if *flagSetup {
 		if err := setupConfig(); err != nil {
 			fmt.Fprintf(os.Stderr, "dnscli: %v\n", err)
@@ -338,32 +321,40 @@ func main() {
 		}
 		return
 	}
-	
-	if err := validateArgs(); err != nil {
+
+	args := flag.Args()
+	if len(args) == 0 {
+		fmt.Fprintf(os.Stderr, "dnscli: no command specified\n")
+		fmt.Fprintf(os.Stderr, "Try 'dnscli --help' for more information.\n")
+		os.Exit(1)
+	}
+
+	command := args[0]
+	if err := validateArgs(command); err != nil {
 		fmt.Fprintf(os.Stderr, "dnscli: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Try 'dnscli --help' for more information.\n")
 		os.Exit(1)
 	}
-	
+
 	var err error
-	
-	switch {
-	case *cmdList:
+
+	switch command {
+	case "list":
 		err = makeRequest("GET", "/dns", nil)
-		
-	case *cmdAdd:
+
+	case "add":
 		payload := Record{Domain: *optDomain, IP: *optIP}
 		err = makeRequest("POST", "/dns", payload)
-		
-	case *cmdUpdate:
+
+	case "update":
 		payload := Record{Domain: *optDomain, IP: *optIP, NewIP: *optNewIP}
 		err = makeRequest("PUT", "/dns", payload)
-		
-	case *cmdDelete:
+
+	case "delete":
 		payload := Record{Domain: *optDomain, IP: *optIP}
 		err = makeRequest("DELETE", "/dns", payload)
 	}
-	
+
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "dnscli: %v\n", err)
 		os.Exit(1)
