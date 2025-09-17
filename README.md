@@ -109,16 +109,16 @@ This command prompts for server URL and API key, storing configuration in `~/.dn
 
 ```bash
 # List all DNS records
-./dnscli --list
+./dnscli list
 
 # Add a DNS record
-./dnscli --add --domain api.local --ip 192.168.1.100
+./dnscli add --domain api.local --ip 192.168.1.100
 
 # Update existing record
-./dnscli --update --domain api.local --new-ip 192.168.1.101
+./dnscli update --domain api.local --new-ip 192.168.1.101
 
 # Delete a record
-./dnscli --delete --domain api.local
+./dnscli delete --domain api.local
 ```
 
 ## API Reference
